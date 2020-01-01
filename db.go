@@ -308,8 +308,7 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	defer resp.Body.Close()
 
 	//官网现在的把数据库文件在文件夹中，需要先解压提取数据库文件后再压缩
-	middleFile := os.TempDir()+"tmp_data_item"
-
+	middleFile := os.TempDir() +"tmp_data_item"
 	//生成中间文件
 	res, err := http.Get(MaxMindDB)
 	if err !=nil{
@@ -330,13 +329,7 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 
 	tmpfile = filepath.Join(os.TempDir(),
 		fmt.Sprintf("_freegeoip.%d.db.gz", time.Now().UnixNano()))
-	f, err := os.Create(tmpfile)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-	_, err = io.Copy(f, resp.Body)
-
+	err = utils.CompressFile(dbPath,tmpfile)
 
 	if err != nil {
 		return "", err

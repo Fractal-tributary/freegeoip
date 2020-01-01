@@ -1,11 +1,8 @@
 package utils
 
 import (
-	"fmt"
 	"net/http"
-	"path/filepath"
 	"testing"
-	"time"
 )
 var MaxMindDB = "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=R9bpXwUb0nfuavnC&suffix=tar.gz"
 
@@ -49,9 +46,9 @@ func TestTarGz(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Log(f)
-	tmpfile := filepath.Join(
-		fmt.Sprintf("_freegeoip.%d.db.gz", time.Now().UnixNano()))
-	err = TarGz(f,tmpfile,0)
+	//tmpfile := filepath.Join(
+	//	fmt.Sprintf("_freegeoip.%d.db.gz", time.Now().UnixNano()))
+	err = CompressFile(f,"GeoLite2-City.mmdb.gz")
 	if err != nil{
 		t.Fatal(err)
 	}

@@ -10,6 +10,41 @@ import (
 	"path/filepath"
 )
 
+//压缩文件Src到Dst
+func CompressFile(Src string, Dst string) error {
+	newfile, err := os.Create(Dst)
+	if err != nil {
+		return err
+	}
+	defer newfile.Close()
+
+	file, err := os.Open(Src)
+	if err != nil {
+		return err
+	}
+
+	zw := gzip.NewWriter(newfile)
+
+	filestat, err := file.Stat()
+	if err != nil {
+		return nil
+	}
+
+	zw.Name = filestat.Name()
+	zw.ModTime = filestat.ModTime()
+	_, err = io.Copy(zw, file)
+	if err != nil {
+		return nil
+	}
+
+	zw.Flush()
+	if err := zw.Close(); err != nil {
+		return nil
+	}
+	return nil
+}
+
+
 // UnTarGz takes a destination path and a reader; a tar reader loops over the tar.gz file
 // creating the file structure at 'dst' along the way, and writing any files
 func UnTarGz(dst string, r io.Reader) error {
