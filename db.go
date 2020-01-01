@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/Fractal-tributary/freegeoip/utils"
 	"io"
 	"io/ioutil"
 	"math"
@@ -253,6 +254,8 @@ func (db *DB) autoUpdate(url string) {
 }
 
 func (db *DB) runUpdate(url string) error {
+	//通过访问这个url，在maxmind的下载请求的header中会标明这个版本的md5
+	//通过在url中去除date字段默认更新最新的版本，当当前版本的数据库的md5与此次请求的md5不同时，更新数据
 	yes, err := db.needUpdate(url)
 	if err != nil {
 		return err
@@ -296,12 +299,35 @@ func (db *DB) needUpdate(url string) (bool, error) {
 	return false, nil
 }
 
+//因数据官方网站下载数据格式变化，旧版本的下载文件处理不足以满足新版本的文件处理形式
 func (db *DB) download(url string) (tmpfile string, err error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	//官网现在的把数据库文件在文件夹中，需要先解压提取数据库文件后再压缩
+	middleFile := os.TempDir()+"tmp_data_item"
+
+	//生成中间文件
+	res, err := http.Get(MaxMindDB)
+	if err !=nil{
+		return "",err
+	}
+	//解压到 middleFile 路径下
+	err = utils.UnTarGz(middleFile,res.Body)
+	if err !=nil{
+		return"",err
+	}
+
+	// 在middleFile查找 GeoLite2-City.mmdb文件并获得文件路径
+	dbPath,err := utils.FindFile(middleFile,"GeoLite2-City.mmdb")
+	if err != nil{
+		return "",err
+	}
+
+
 	tmpfile = filepath.Join(os.TempDir(),
 		fmt.Sprintf("_freegeoip.%d.db.gz", time.Now().UnixNano()))
 	f, err := os.Create(tmpfile)
@@ -310,6 +336,8 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 	}
 	defer f.Close()
 	_, err = io.Copy(f, resp.Body)
+
+
 	if err != nil {
 		return "", err
 	}
