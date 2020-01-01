@@ -309,7 +309,8 @@ func (db *DB) download(url string) (tmpfile string, err error) {
 
 	//官网现在的把数据库文件在文件夹中，需要先解压提取数据库文件后再压缩
 	middleFile := os.TempDir() +"tmp_data_item"
-
+	//记得删除
+	defer os.RemoveAll(middleFile)
 	//解压到 middleFile 路径下
 	err = utils.UnTarGz(middleFile,resp.Body)
 	if err !=nil{
